@@ -5,8 +5,8 @@ import (
 )
 
 // GetMonthly generates an Epoch that changes at the beginning of every month according to time.Time.Month() enumeration.
-func GetMonthly() Epoch {
-	return Epoch{
+func GetMonthly() *Epoch {
+	return &Epoch{
 		MinDuration: time.Hour * 24 * 28,
 		MaxDuration: time.Hour * 24 * 31,
 		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
@@ -19,8 +19,8 @@ func GetMonthly() Epoch {
 }
 
 // GetWeekly generates an Epoch that changes at the beginning of every week according to time.Time.Weekday() enumeration.
-func GetWeekly() Epoch {
-	return Epoch{
+func GetWeekly() *Epoch {
+	return &Epoch{
 		MinDuration: time.Hour * 24 * 7,
 		MaxDuration: time.Hour * 24 * 7,
 		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
@@ -33,8 +33,8 @@ func GetWeekly() Epoch {
 }
 
 // GetDaily generates an Epoch that changes at the beginning of every day according to time.Time.Day() enumeration.
-func GetDaily() Epoch {
-	return Epoch{
+func GetDaily() *Epoch {
+	return &Epoch{
 		MinDuration: time.Hour * 24,
 		MaxDuration: time.Hour * 24,
 		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
@@ -47,8 +47,8 @@ func GetDaily() Epoch {
 }
 
 // GetHourly generates an Epoch that changes at the beginning of every hour of the day according to time.Time.Hour() enumeration.
-func GetHourly() Epoch {
-	return Epoch{
+func GetHourly() *Epoch {
+	return &Epoch{
 		MinDuration: time.Hour,
 		MaxDuration: time.Hour,
 		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
@@ -60,7 +60,13 @@ func GetHourly() Epoch {
 	}
 }
 
+var gregorianEpochs []*Epoch
+
+func init() {
+	gregorianEpochs = []*Epoch{GetMonthly(), GetWeekly(), GetDaily(), GetHourly()}
+}
+
 // GetGregorianEpochs generates a []Epoch in descending order of epoch length, where each Epoch corresponds to a Gregorian calendar measure of time.
-func GetGregorianEpochs() []Epoch {
-	return []Epoch{GetMonthly(), GetWeekly(), GetDaily(), GetHourly()}
+func GetGregorianEpochs() []*Epoch {
+	return gregorianEpochs
 }
