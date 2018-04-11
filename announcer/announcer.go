@@ -12,98 +12,119 @@ import (
 	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
 
 var errNotAllEpochsConsumed = errors.New("Not all epochs consumed")
 var errNilRepo = errors.New("GetRemoteAnnouncer.repo is nil")
+var errVacuousEpochs = errors.New("[]epoch.Epoch slice is vacuous: contains no epochs")
 
+// GetErrNotAllEpochsConsumed produces the canonical error for failing to consume all input epochs.
 func GetErrNotAllEpochsConsumed() error {
 	return errNotAllEpochsConsumed
 }
 
+// GetErrNilRepo produces the canonical error for a nil repo value that was expected to be non-nil.
 func GetErrNilRepo() error {
 	return errNilRepo
 }
 
+// GetErrVacuousEpochs the canonical error for a vacuous computation over epochs; i.e., passing an empty slice of epochs which would yield an empty output.
+func GetErrVacuousEpochs() error {
+	return errVacuousEpochs
+}
+
+// Revision constitutes a announcer data related to a git revision.
 type Revision interface {
+	// GetHash returns the SHA hash associated with this revision.
 	GetHash() [20]byte
+
+	// GetTime returns the UTC commit time associated with this revision.
 	GetTime() time.Time
+
+	// GetEpoch returns the epoch associated with this revision.
 	GetEpoch() *epoch.Epoch
+
+	// GetEpochBasis returns the epoch basis associated with this revision.
 	GetEpochBasis() *epoch.Basis
 }
 
+// RevisionData is a basic struct implementation of Revision.
 type RevisionData struct {
-	hash       [20]byte
-	commitTime time.Time
-	epoch      *epoch.Epoch
-	basis      *epoch.Basis
+	Hash       [20]byte
+	CommitTime time.Time
+	Epoch      *epoch.Epoch
+	Basis      *epoch.Basis
 }
 
 func (r RevisionData) GetHash() [20]byte {
-	return r.hash
+	return r.Hash
 }
 
 func (r RevisionData) GetTime() time.Time {
-	return r.commitTime
+	return r.CommitTime
 }
 
 func (r RevisionData) GetEpoch() *epoch.Epoch {
-	return r.epoch
+	return r.Epoch
 }
 
 func (r RevisionData) GetEpochBasis() *epoch.Basis {
-	return r.basis
+	return r.Basis
 }
 
+// Announcer constitutes the top-level component for implementing a revisions-of-interest announcer.
 type Announcer interface {
-	GetInitialRevisions([]epoch.Epoch, epoch.Basis) ([]Revision, error)
-	GetUpdatedRevisions([]Revision) ([]Revision, error)
+	// GetRevisions computes epochal revisions based on current local announcer state.
+	GetRevisions([]*epoch.Epoch, *epoch.Basis) ([]Revision, error)
 
-	getInitialPRs() (storer.ReferenceIter, error)
-	getNewPRs() (storer.ReferenceIter, error)
-	cloneRepo() error
-	updateRepo() error
-	resetRepo() error
+	// Update applies an incremental update to announcer state; e.g., an Announcer bound to a repository may have a local clone and perform an incremental fetch.
+	Update() error
+
+	// Reset abandons current announcer state and reloads a valid initial announcer state.
+	Reset() error
 }
 
-type GitRemoteAnnouncer struct {
-	repo *git.Repository
-	cfg  *GitRemoteAnnouncerConfig
-}
-
+// GitRemoteAnnouncerConfig configures the git operations performed by a GitRemoteAnnouncer.
 type GitRemoteAnnouncerConfig struct {
 	URL           string
 	RemoteName    string
 	ReferenceName plumbing.ReferenceName
 	Depth         int
+
+	agit.Git
 }
 
-func (a GitRemoteAnnouncer) cloneRepo() error {
-	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
-		URL:           a.cfg.URL,
-		RemoteName:    a.cfg.RemoteName,
-		ReferenceName: a.cfg.ReferenceName,
-		Depth:         a.cfg.Depth,
-	})
-	if err != nil {
-		log.Errorf("Error creating git clone: %v", err)
-		return err
-	}
-	a.repo = repo
-	return nil
+type gitRemoteAnnouncer struct {
+	repo agit.Repository
+	cfg  *GitRemoteAnnouncerConfig
 }
 
-func NewGitRemoteAnnouncer(cfg GitRemoteAnnouncerConfig) (a *GitRemoteAnnouncer, err error) {
-	a = &GitRemoteAnnouncer{}
-	if err = a.cloneRepo(); err != nil {
-		return nil, err
-	}
+// NewGitRemoteAnnouncer produces an Announcer that is bound to an agit.Repository.
+func NewGitRemoteAnnouncer(cfg GitRemoteAnnouncerConfig) (a Announcer, err error) {
+	a = &gitRemoteAnnouncer{}
+	err = a.Reset()
 	return a, err
 }
 
-func (a GitRemoteAnnouncer) getRevisions(epochs []*epoch.Epoch, basis *epoch.Basis, iter storer.ReferenceIter) (rs []Revision, err error) {
+func (a gitRemoteAnnouncer) GetRevisions(epochs []*epoch.Epoch, basis *epoch.Basis) (rs []Revision, err error) {
+	if a.repo == nil {
+		err = GetErrNilRepo()
+	} else if len(epochs) == 0 {
+		err = GetErrVacuousEpochs()
+	}
+	if err != nil {
+		log.Error(err)
+		return rs, err
+	}
+
+	iter, err := a.repo.Tags()
+	if err != nil {
+		log.Errorf("Error loading repository tags: %v", err)
+		return rs, err
+	}
+	iter = agit.NewMergedPRIter(iter)
+
 	var prev *object.Commit
 	prev = nil
 	for next, err := iter.Next(); err == nil && len(epochs) > 0; next, err = iter.Next() {
@@ -116,45 +137,31 @@ func (a GitRemoteAnnouncer) getRevisions(epochs []*epoch.Epoch, basis *epoch.Bas
 
 		if epoch.IsEpochal(&prev.Committer.When, &nextCommit.Committer.When, basis) {
 			rs = append(rs, RevisionData{
-				hash:       nextCommit.Hash,
-				commitTime: nextCommit.Committer.When,
-				epoch:      epoch,
-				basis:      basis,
+				Hash:       nextCommit.Hash,
+				CommitTime: nextCommit.Committer.When,
+				Epoch:      epoch,
+				Basis:      basis,
 			})
 			epochs = epochs[1:]
 		}
 
 		prev = nextCommit
 	}
+
 	if len(epochs) > 0 {
-		return rs, GetErrNotAllEpochsConsumed()
+		err = GetErrNotAllEpochsConsumed()
+		log.Warnf("Not all epochs consumed: %v", err)
+		return rs, err
 	}
 
 	return rs, err
 }
 
-func (a GitRemoteAnnouncer) GetInitialRevisions(epochs []*epoch.Epoch, basis *epoch.Basis) (rs []Revision, err error) {
+func (a gitRemoteAnnouncer) Update() (err error) {
 	if a.repo == nil {
 		err = GetErrNilRepo()
-		log.Errorf("GitRemoteAnnouncer.GetInitialRevisions: %v", err)
-		return rs, err
-	}
-
-	iter, err := a.repo.Tags()
-	if err != nil {
-		log.Errorf("Error loading repository tags: %v", err)
-		return rs, err
-	}
-	iter = agit.NewMergedPRIter(iter)
-
-	return a.getRevisions(epochs, basis, iter)
-}
-
-func (a GitRemoteAnnouncer) GetUpdatedRevisions(epochs []*epoch.Epoch, basis *epoch.Basis) (rs []Revision, err error) {
-	if a.repo == nil {
-		err = GetErrNilRepo()
-		log.Errorf("GitRemoteAnnouncer.GetUpdatedRevisions: %v", err)
-		return rs, err
+		log.Error(err)
+		return err
 	}
 
 	name := a.cfg.ReferenceName
@@ -164,9 +171,25 @@ func (a GitRemoteAnnouncer) GetUpdatedRevisions(epochs []*epoch.Epoch, basis *ep
 		RefSpecs:   []config.RefSpec{refSpec},
 		Depth:      100,
 	}); err != nil {
-		log.Errorf("GitRemoteAnnouncer.GetUpdatedRevisions: %v", err)
-		return rs, err
+		log.Error(err)
+		return err
 	}
 
-	return a.GetInitialRevisions(epochs, basis)
+	return nil
+}
+
+func (a gitRemoteAnnouncer) Reset() error {
+	cfg := a.cfg
+	repo, err := cfg.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+		URL:           cfg.URL,
+		RemoteName:    cfg.RemoteName,
+		ReferenceName: cfg.ReferenceName,
+		Depth:         cfg.Depth,
+	})
+	if err != nil {
+		log.Errorf("Error creating git clone: %v", err)
+		return err
+	}
+	a.repo = repo
+	return nil
 }
