@@ -2,6 +2,7 @@ package git
 
 import (
 	"flag"
+	"io"
 	"strings"
 
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -20,7 +21,7 @@ type FilteredReferenceIter struct {
 }
 
 func (iter FilteredReferenceIter) Next() (ref *plumbing.Reference, err error) {
-	for ref, err = iter.iter.Next(); err != nil && iter.filter(ref); ref, err = iter.iter.Next() {
+	for ref, err = iter.iter.Next(); err == nil && !iter.filter(ref); ref, err = iter.iter.Next() {
 	}
 	return ref, err
 }
@@ -44,76 +45,45 @@ func NewMergedPRIter(iter storer.ReferenceIter) storer.ReferenceIter {
 			if ref == nil {
 				return false
 			}
-			return strings.HasPrefix(string(ref.Name()), "merged_pr_")
+			return strings.HasPrefix(string(ref.Name()), "refs/tags/merged_pr_")
 		},
 		iter: iter,
 	}
 }
 
-/*
-
-type TagIterConfig struct {
-	URL           string
-	ReferenceName plumbing.ReferenceName
-	gitChunkSize  *int
+type StopReferenceIter struct {
+	stopAt *plumbing.Reference
+	iter   storer.ReferenceIter
 }
 
-type tagIter struct {
-	repo *git.Repository
-	iter storer.ReferenceIter
-	prev *plumbing.Reference
-}
-
-func (iter tagIter) Next() (*plumbing.Reference, error) {
-	ref, err := iter.iter.Next()
-	if err == io.EOF {
-		return iter.getNext()
+func (iter StopReferenceIter) Next() (ref *plumbing.Reference, err error) {
+	ref, err = iter.iter.Next()
+	if err != nil {
+		return ref, err
 	}
-	iter.prev = ref
+	if iter.stopAt.Hash() == ref.Hash() {
+		iter.Close()
+		return nil, io.EOF
+	}
 	return ref, err
 }
 
-func (iter tagIter) ForEach(f func(*plumbing.Reference) error) error {
-	// TODO(markdittmer): This is not right. Should complete; check error, then maybe fetch more and do more forEaching
-	wrapper := func(r *plumbing.Reference) error {
-		err := f(r)
-		if err == io.EOF {
-			return iter.continueForEach(f)
+func (iter StopReferenceIter) ForEach(f func(*plumbing.Reference) error) error {
+	return iter.iter.ForEach(func(ref *plumbing.Reference) error {
+		if iter.stopAt.Hash() == ref.Hash() {
+			return io.EOF
 		}
-		return err
-	}
-	return iter.iter.ForEach(wrapper)
+		return f(ref)
+	})
 }
 
-func (iter tagIter) Close() {
+func (iter StopReferenceIter) Close() {
 	iter.iter.Close()
 }
 
-func NewTagIter(cfg TagIterConfig) (*tagIter, error) {
-	var depth int
-	if cfg.gitChunkSize != nil {
-		depth = *cfg.gitChunkSize
-	} else {
-		depth = *gitChunkSize
+func NewStopReferenceIter(iter storer.ReferenceIter, stopAt *plumbing.Reference) storer.ReferenceIter {
+	return StopReferenceIter{
+		stopAt,
+		iter,
 	}
-	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
-		URL:           cfg.URL,
-		RemoteName:    "origin",
-		ReferenceName: cfg.ReferenceName,
-		Depth:         depth,
-	})
-	if err != nil {
-		log.Errorf("Error creating git clone: %v", err)
-		return nil, err
-	}
-	baseIter, err := repo.Tags()
-	if err != nil {
-		log.Errorf("Error creating fetching tags from clone: %v", err)
-		return nil, err
-	}
-	return &tagIter{
-		repo: repo,
-		iter: baseIter,
-	}, nil
 }
-*/

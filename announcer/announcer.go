@@ -102,12 +102,15 @@ type gitRemoteAnnouncer struct {
 
 // NewGitRemoteAnnouncer produces an Announcer that is bound to an agit.Repository.
 func NewGitRemoteAnnouncer(cfg GitRemoteAnnouncerConfig) (a Announcer, err error) {
-	a = &gitRemoteAnnouncer{}
+	a = &gitRemoteAnnouncer{
+		nil,
+		&cfg,
+	}
 	err = a.Reset()
 	return a, err
 }
 
-func (a gitRemoteAnnouncer) GetRevisions(epochs []*epoch.Epoch, basis *epoch.Basis) (rs []Revision, err error) {
+func (a *gitRemoteAnnouncer) GetRevisions(epochs []*epoch.Epoch, basis *epoch.Basis) (rs []Revision, err error) {
 	if a.repo == nil {
 		err = GetErrNilRepo()
 	} else if len(epochs) == 0 {
@@ -157,7 +160,7 @@ func (a gitRemoteAnnouncer) GetRevisions(epochs []*epoch.Epoch, basis *epoch.Bas
 	return rs, err
 }
 
-func (a gitRemoteAnnouncer) Update() (err error) {
+func (a *gitRemoteAnnouncer) Update() (err error) {
 	if a.repo == nil {
 		err = GetErrNilRepo()
 		log.Error(err)
@@ -178,7 +181,7 @@ func (a gitRemoteAnnouncer) Update() (err error) {
 	return nil
 }
 
-func (a gitRemoteAnnouncer) Reset() error {
+func (a *gitRemoteAnnouncer) Reset() error {
 	cfg := a.cfg
 	repo, err := cfg.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:           cfg.URL,
