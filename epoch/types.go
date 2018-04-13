@@ -15,5 +15,5 @@ type Epoch struct {
 	IsEpochal   EpochalPredicate
 }
 
-// EpochalPredicate is a predicate that determines whether a new epoch occurs between prev and next.
+// EpochalPredicate is a predicate that determines whether a new epoch begins between prev and next.
 type EpochalPredicate func(prev *time.Time, next *time.Time, basis *Basis) bool
