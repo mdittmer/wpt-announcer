@@ -91,7 +91,7 @@ func TestGitRemoteAnnouncer_GetRevisions_VacuousEpochs(t *testing.T) {
 }
 
 type MockRepository struct {
-	refs    []*object.Reference
+	refs    []*plumbing.Reference
 	commits map[string]*object.Commit
 	fetch   func(o *git.FetchOptions) error
 }
