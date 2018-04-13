@@ -8,36 +8,51 @@ var halfDaily *Epoch
 var quarterDaily *Epoch
 var eighthDaily *Epoch
 
+func halfDailyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
+	if prev.After(*next) {
+		return halfDailyIsEpochal(next, prev, basis)
+	}
+	if next.Sub(*prev).Hours() >= 12 {
+		return true
+	}
+	return prev.Hour()/12 != next.Hour()/12
+}
+
+func quarterDailyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
+	if prev.After(*next) {
+		return quarterDailyIsEpochal(next, prev, basis)
+	}
+	if next.Sub(*prev).Hours() >= 6 {
+		return true
+	}
+	return prev.Hour()/6 != next.Hour()/6
+}
+
+func eighthDailyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
+	if prev.After(*next) {
+		return eighthDailyIsEpochal(next, prev, basis)
+	}
+	if next.Sub(*prev).Hours() >= 3 {
+		return true
+	}
+	return prev.Hour()/3 != next.Hour()/3
+}
+
 func init() {
 	halfDaily = &Epoch{
 		MinDuration: time.Hour * 12,
 		MaxDuration: time.Hour * 12,
-		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
-			if next.Sub(*prev).Hours() >= 12 {
-				return true
-			}
-			return prev.Hour() < 12 && next.Hour() >= 12
-		},
+		IsEpochal:   halfDailyIsEpochal,
 	}
 	quarterDaily = &Epoch{
 		MinDuration: time.Hour * 6,
 		MaxDuration: time.Hour * 6,
-		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
-			if next.Sub(*prev).Hours() >= 6 {
-				return true
-			}
-			return prev.Hour()/4 != next.Hour()/4
-		},
+		IsEpochal:   quarterDailyIsEpochal,
 	}
 	eighthDaily = &Epoch{
 		MinDuration: time.Hour * 3,
 		MaxDuration: time.Hour * 3,
-		IsEpochal: func(prev *time.Time, next *time.Time, basis *Basis) bool {
-			if next.Sub(*prev).Hours() >= 3 {
-				return true
-			}
-			return prev.Hour()/8 != next.Hour()/8
-		},
+		IsEpochal:   eighthDailyIsEpochal,
 	}
 }
 
