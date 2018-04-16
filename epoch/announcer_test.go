@@ -113,3 +113,17 @@ func TestIsNotEighthDaily_Far(t *testing.T) {
 	assert.False(t, eighthDaily.IsEpochal(&dayStart, &dayEnd, &nilBasis))
 	assert.False(t, eighthDaily.IsEpochal(&dayEnd, &dayStart, &nilBasis))
 }
+
+//
+// Relationships between epochs
+//
+
+func TestEpochAlignment(t *testing.T) {
+	epochs := epoch.GetAnnouncerEpochs()
+	justPrior := time.Date(2018, 3, 31, 23, 59, 59, 999999999, time.UTC)
+	justAfter := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
+	for _, epoch := range epochs {
+		assert.True(t, epoch.IsEpochal(&justPrior, &justAfter, &nilBasis))
+		assert.True(t, epoch.IsEpochal(&justAfter, &justPrior, &nilBasis))
+	}
+}

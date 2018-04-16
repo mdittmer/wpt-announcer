@@ -4,10 +4,26 @@ import (
 	"time"
 )
 
-var monthly *Epoch
-var weekly *Epoch
-var daily *Epoch
-var hourly *Epoch
+var monthly = &Epoch{
+	MinDuration: time.Hour * 24 * 28,
+	MaxDuration: time.Hour * 24 * 31,
+	IsEpochal:   monthlyIsEpochal,
+}
+var weekly = &Epoch{
+	MinDuration: time.Hour * 24 * 7,
+	MaxDuration: time.Hour * 24 * 7,
+	IsEpochal:   weeklyIsEpochal,
+}
+var daily = &Epoch{
+	MinDuration: time.Hour * 24,
+	MaxDuration: time.Hour * 24,
+	IsEpochal:   dailyIsEpochal,
+}
+var hourly = &Epoch{
+	MinDuration: time.Hour,
+	MaxDuration: time.Hour,
+	IsEpochal:   hourlyIsEpochal,
+}
 
 func monthlyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
 	if prev.Year() != next.Year() {
@@ -46,29 +62,6 @@ func hourlyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
 	return prev.Hour() != next.Hour()
 }
 
-func init() {
-	monthly = &Epoch{
-		MinDuration: time.Hour * 24 * 28,
-		MaxDuration: time.Hour * 24 * 31,
-		IsEpochal:   monthlyIsEpochal,
-	}
-	weekly = &Epoch{
-		MinDuration: time.Hour * 24 * 7,
-		MaxDuration: time.Hour * 24 * 7,
-		IsEpochal:   weeklyIsEpochal,
-	}
-	daily = &Epoch{
-		MinDuration: time.Hour * 24,
-		MaxDuration: time.Hour * 24,
-		IsEpochal:   dailyIsEpochal,
-	}
-	hourly = &Epoch{
-		MinDuration: time.Hour,
-		MaxDuration: time.Hour,
-		IsEpochal:   hourlyIsEpochal,
-	}
-}
-
 // GetMonthly generates an Epoch that changes at the beginning of every month according to time.Time.Month() enumeration.
 func GetMonthly() *Epoch {
 	return monthly
@@ -92,7 +85,7 @@ func GetHourly() *Epoch {
 var gregorianEpochs []*Epoch
 
 func init() {
-	gregorianEpochs = []*Epoch{GetMonthly(), GetWeekly(), GetDaily(), GetHourly()}
+	gregorianEpochs = []*Epoch{monthly, weekly, daily, hourly}
 }
 
 // GetGregorianEpochs generates a []Epoch in descending order of epoch length, where each Epoch corresponds to a Gregorian calendar measure of time.
