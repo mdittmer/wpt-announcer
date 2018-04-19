@@ -8,6 +8,8 @@ type Monthly struct{}
 
 func (Monthly) GetData() Data {
 	return Data{
+		"Once per month (monthly)",
+		"The last PR merge commit of each month, by UTC commit timestamp on master.",
 		time.Hour * 24 * 28,
 		time.Hour * 24 * 31,
 	}
@@ -24,6 +26,8 @@ type Weekly struct{}
 
 func (Weekly) GetData() Data {
 	return Data{
+		"Once per week (weekly)",
+		"The last PR merge commit of each week, by UTC commit timestamp on master. Weeks start on Sunday.",
 		time.Hour * 24 * 7,
 		time.Hour * 24 * 7,
 	}
@@ -43,6 +47,8 @@ type Daily struct{}
 
 func (Daily) GetData() Data {
 	return Data{
+		"Once per day (daily)",
+		"The last PR merge commit of each day, by UTC commit timestamp on master.",
 		time.Hour * 24,
 		time.Hour * 24,
 	}
@@ -62,6 +68,8 @@ type Hourly struct{}
 
 func (Hourly) GetData() Data {
 	return Data{
+		"Once per hour (hourly)",
+		"The last PR merge commit of each hour, by UTC commit timestamp on master.",
 		time.Hour,
 		time.Hour,
 	}

@@ -6,6 +6,8 @@ import "time"
 type EpochalPredicate func(prev time.Time, next time.Time) bool
 
 type Data struct {
+	Label       string
+	Description string
 	MinDuration time.Duration
 	MaxDuration time.Duration
 }
