@@ -23,6 +23,12 @@ type Git interface {
 	Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (Repository, error)
 }
 
+type GoGit struct{}
+
+func (GoGit) Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (Repository, error) {
+	return git.Clone(s, worktree, o)
+}
+
 type Revision interface {
 	GetHash() plumbing.Hash
 	GetCommitTime() time.Time
