@@ -1,4 +1,4 @@
-package handlers
+package main
 
 import (
 	"encoding/json"
@@ -15,9 +15,6 @@ import (
 var a announcer.Announcer
 
 func init() {
-	http.HandleFunc("/api/revisions/epochs", epochsHandler)
-	http.HandleFunc("/api/revisions/latest", latestHandler)
-
 	go func() {
 		log.Info("Initializing announcer")
 		var err error
@@ -83,4 +80,9 @@ func latestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(bytes)
+}
+
+func main() {
+	http.HandleFunc("/api/revisions/epochs", epochsHandler)
+	http.HandleFunc("/api/revisions/latest", latestHandler)
 }

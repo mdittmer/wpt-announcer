@@ -7,7 +7,7 @@ resources:
   cpu: 2
   memory_gb: 12
  
- handlers:
+handlers:
  - url: /.*
-  script: _go_app
-  secure: always
+   script: _go_app
+   secure: always

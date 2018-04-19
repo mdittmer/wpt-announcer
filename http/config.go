@@ -1,4 +1,4 @@
-package handlers
+package main
 
 import (
 	"github.com/mdittmer/wpt-announcer/api"
