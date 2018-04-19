@@ -38,10 +38,11 @@ func init() {
 		log.Info("Initializing announcer")
 		var err error
 		a, err = announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
-			URL:           "https://github.com/w3c/web-platform-tests.git",
-			RemoteName:    "origin",
-			ReferenceName: "refs/heads/master",
-			Git:           agit.GoGit{},
+			URL:                       "https://github.com/w3c/web-platform-tests.git",
+			RemoteName:                "origin",
+			ReferenceName:             "refs/heads/master",
+			EpochReferenceIterFactory: announcer.NewBoundedMergedPRIterFactory(),
+			Git: agit.GoGit{},
 		})
 		if err != nil {
 			log.Fatalf("Announcer initialization failed: %v", err)
