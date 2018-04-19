@@ -23,7 +23,7 @@ func getEpochal(prs []*github.PullRequest, epoch epoch.Epoch) *github.PullReques
 			continue
 		}
 		prev := prs[i-1]
-		if epoch.IsEpochal(prev.MergedAt, next.MergedAt, nil) {
+		if epoch.IsEpochal(*prev.MergedAt, *next.MergedAt) {
 			return prev
 		}
 	}
@@ -41,7 +41,12 @@ func main() {
 		log.Fatalf("Failed to fetch PRs: %v", err)
 	}
 	log.Infof("Fetched %d PRs", len(prs))
-	epochs := epoch.GetGregorianEpochs()
+	epochs := []epoch.Epoch{
+		epoch.Monthly{},
+		epoch.Weekly{},
+		epoch.Daily{},
+		epoch.Hourly{},
+	}
 	chosenPRs := make([]*github.PullRequest, 0, len(epochs))
 	for _, epoch := range epochs {
 		pr := getEpochal(prs, epoch)

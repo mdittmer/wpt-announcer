@@ -9,36 +9,47 @@ import (
 	agit "github.com/mdittmer/wpt-announcer/git"
 	"github.com/mdittmer/wpt-announcer/test"
 	"github.com/stretchr/testify/assert"
-	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
-func nilFetchImpl(mr *test.MockRepository, o *git.FetchOptions) error {
-	return nil
-}
-
 func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
-	refs := []*plumbing.Reference{
-		test.NewTagRef("not_a_mergedpr_1", "0000000000000000000000000000000000000001"),
-		test.NewTagRef("not_a_mergedpr_2", "0000000000000000000000000000000000000002"),
-		test.NewTagRef("not_a_mergedpr_3", "0000000000000000000000000000000000000003"),
-		test.NewTagRef("merged_pr_4", "0000000000000000000000000000000000000004"),
-		test.NewTagRef("not_a_mergedpr_5", "0000000000000000000000000000000000000005"),
-		test.NewTagRef("merged_pr_6", "0000000000000000000000000000000000000006"),
+	tags := []test.Tag{
+		test.Tag{
+			TagName:    "not_a_mergedpr_1",
+			Hash:       "01",
+			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
+		},
+		test.Tag{
+			TagName:    "not_a_mergedpr_2",
+			Hash:       "02",
+			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
+		},
+		test.Tag{
+			TagName:    "not_a_mergedpr_3",
+			Hash:       "03",
+			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
+		},
+		test.Tag{
+			TagName:    "merged_pr_4",
+			Hash:       "04",
+			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
+		},
+		test.Tag{
+			TagName:    "not_a_mergedpr_5",
+			Hash:       "05",
+			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
+		},
+		test.Tag{
+			TagName:    "merged_pr_6",
+			Hash:       "06",
+			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
+		},
 	}
-	commits := map[string]*object.Commit{
-		"0000000000000000000000000000000000000001": test.NewCommit("0000000000000000000000000000000000000001", time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC)),
-		"0000000000000000000000000000000000000002": test.NewCommit("0000000000000000000000000000000000000002", time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC)),
-		"0000000000000000000000000000000000000003": test.NewCommit("0000000000000000000000000000000000000003", time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC)),
-		"0000000000000000000000000000000000000004": test.NewCommit("0000000000000000000000000000000000000004", time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)),
-		"0000000000000000000000000000000000000005": test.NewCommit("0000000000000000000000000000000000000005", time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC)),
-		"0000000000000000000000000000000000000006": test.NewCommit("0000000000000000000000000000000000000006", time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC)),
-	}
+	refs := test.Tags(tags).Refs()
 	iterFactory := func(t *testing.T) storer.ReferenceIter {
 		baseIter := test.NewMockIter(refs)
-		iter, err := agit.NewTimeOrderedReferenceIter(&baseIter, test.NewMockRepository(refs, commits, nilFetchImpl))
+		iter, err := agit.NewTimeOrderedReferenceIter(&baseIter, test.NewMockRepository(tags, test.NilFetchImpl))
 		assert.True(t, err == nil)
 		return iter
 	}
@@ -68,9 +79,9 @@ func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
 
 func TestFilteredReferenceIter_Custom(t *testing.T) {
 	refs := []*plumbing.Reference{
-		test.NewTagRef("tag_1", "0000000000000000000000000000000000000001"),
-		test.NewTagRef("tag_2", "0000000000000000000000000000000000000002"),
-		test.NewTagRef("tag_3", "0000000000000000000000000000000000000003"),
+		test.NewTagRef("tag_1", "01"),
+		test.NewTagRef("tag_2", "02"),
+		test.NewTagRef("tag_3", "03"),
 	}
 
 	// Include every other commit.
@@ -108,58 +119,43 @@ func TestFilteredReferenceIter_Custom(t *testing.T) {
 // Test custom filtered reference iter.
 
 func TestMergedPRIter_Simple(t *testing.T) {
-	prs := []*plumbing.Reference{
-		test.NewTagRef("merged_pr_6", "0000000000000000000000000000000000000006"),
-		test.NewTagRef("merged_pr_4", "0000000000000000000000000000000000000004"),
-	}
-	allRefs := []*plumbing.Reference{
-		test.NewTagRef("not_a_mergedpr_1", "0000000000000000000000000000000000000001"),
-		test.NewTagRef("not_a_mergedpr_2", "0000000000000000000000000000000000000002"),
-		test.NewTagRef("not_a_mergedpr_3", "0000000000000000000000000000000000000003"),
-		prs[1],
-		test.NewTagRef("not_a_mergedpr_5", "0000000000000000000000000000000000000005"),
-		prs[0],
-	}
-	commits := map[string]*object.Commit{
-		"0000000000000000000000000000000000000001": &object.Commit{
-			Hash: allRefs[0].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
-			},
+	tags := []test.Tag{
+		test.Tag{
+			TagName:    "not_a_mergedpr_1",
+			Hash:       "01",
+			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000002": &object.Commit{
-			Hash: allRefs[1].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "not_a_mergedpr_2",
+			Hash:       "02",
+			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000003": &object.Commit{
-			Hash: allRefs[2].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "not_a_mergedpr_3",
+			Hash:       "03",
+			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000004": &object.Commit{
-			Hash: allRefs[3].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "merged_pr_4",
+			Hash:       "04",
+			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000005": &object.Commit{
-			Hash: allRefs[4].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "not_a_mergedpr_5",
+			Hash:       "05",
+			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000006": &object.Commit{
-			Hash: allRefs[5].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "merged_pr_6",
+			Hash:       "06",
+			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
 		},
 	}
-	repo := test.NewMockRepository(allRefs, commits, nilFetchImpl)
-	baseIter := test.NewMockIter(allRefs)
+	refs := test.Tags(tags).Refs()
+	// merged_pr_* from refs in reverse cronological order.
+	prs := [2]*plumbing.Reference{refs[5], refs[3]}
+	repo := test.NewMockRepository(tags, test.NilFetchImpl)
+	baseIter := test.NewMockIter(refs)
 	filteredIter, err := agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
 	i := 0
@@ -169,7 +165,7 @@ func TestMergedPRIter_Simple(t *testing.T) {
 	}
 	assert.True(t, i == len(prs))
 
-	baseIter = test.NewMockIter(allRefs)
+	baseIter = test.NewMockIter(refs)
 	filteredIter, err = agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
 	i = 0
@@ -191,18 +187,18 @@ func stopAtHash(h plumbing.Hash) agit.ReferencePredicate {
 }
 
 func TestStopReferenceIter_Simple(t *testing.T) {
-	stopAt := test.NewHash("0000000000000000000000000000000000000004")
+	stopAt := test.NewHash("04")
 	includedRefs := []*plumbing.Reference{
-		test.NewTagRef("some_tag_1", "0000000000000000000000000000000000000001"),
-		test.NewTagRef("some_tag_2", "0000000000000000000000000000000000000002"),
-		test.NewTagRef("some_tag_3", "0000000000000000000000000000000000000003"),
+		test.NewTagRef("some_tag_1", "01"),
+		test.NewTagRef("some_tag_2", "02"),
+		test.NewTagRef("some_tag_3", "03"),
 	}
 	var allRefs []*plumbing.Reference
 	allRefs = append(allRefs, includedRefs...)
 	allRefs = append(allRefs, []*plumbing.Reference{
-		test.NewTagRef("some_tag_4", "0000000000000000000000000000000000000004"),
-		test.NewTagRef("some_tag_5", "0000000000000000000000000000000000000005"),
-		test.NewTagRef("some_tag_6", "0000000000000000000000000000000000000006"),
+		test.NewTagRef("some_tag_4", "04"),
+		test.NewTagRef("some_tag_5", "05"),
+		test.NewTagRef("some_tag_6", "06"),
 	}...)
 
 	baseIter := test.NewMockIter(allRefs)
@@ -226,71 +222,51 @@ func TestStopReferenceIter_Simple(t *testing.T) {
 }
 
 func TestMergedPRIter_StopReferenceIter_Compose(t *testing.T) {
-	stopAt := test.NewHash("0000000000000000000000000000000000000006")
-	includedPrs := []*plumbing.Reference{
-		test.NewTagRef("merged_pr_7", "0000000000000000000000000000000000000007"),
-	}
-	prs := []*plumbing.Reference{
-		includedPrs[0],
-		test.NewTagRef("merged_pr_6", "0000000000000000000000000000000000000006"),
-		test.NewTagRef("merged_pr_4", "0000000000000000000000000000000000000004"),
-	}
-	// Time order matches 1..6 hash values, but listed out of order to test composition with TimeOrderedReferenceIter.
-	allRefs := []*plumbing.Reference{
-		prs[0],
-		test.NewTagRef("not_a_mergedpr_1", "0000000000000000000000000000000000000001"),
-		prs[2],
-		test.NewTagRef("not_a_mergedpr_3", "0000000000000000000000000000000000000003"),
-		prs[1],
-		test.NewTagRef("not_a_mergedpr_2", "0000000000000000000000000000000000000002"),
-		test.NewTagRef("not_a_mergedpr_5", "0000000000000000000000000000000000000005"),
-	}
-	commits := map[string]*object.Commit{
-		"0000000000000000000000000000000000000001": &object.Commit{
-			Hash: allRefs[0].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
-			},
+	tags := []test.Tag{
+		test.Tag{
+			TagName:    "not_a_mergedpr_1",
+			Hash:       "01",
+			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000002": &object.Commit{
-			Hash: allRefs[1].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "not_a_mergedpr_2",
+			Hash:       "02",
+			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000003": &object.Commit{
-			Hash: allRefs[2].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "not_a_mergedpr_3",
+			Hash:       "03",
+			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000004": &object.Commit{
-			Hash: allRefs[3].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "merged_pr_4",
+			Hash:       "04",
+			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000005": &object.Commit{
-			Hash: allRefs[4].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "not_a_mergedpr_5",
+			Hash:       "05",
+			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000006": &object.Commit{
-			Hash: allRefs[5].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "merged_pr_6",
+			Hash:       "06",
+			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
 		},
-		"0000000000000000000000000000000000000007": &object.Commit{
-			Hash: allRefs[6].Hash(),
-			Committer: object.Signature{
-				When: time.Date(2018, 4, 7, 0, 0, 0, 0, time.UTC),
-			},
+		test.Tag{
+			TagName:    "merged_pr_7",
+			Hash:       "07",
+			CommitTime: time.Date(2018, 4, 7, 0, 0, 0, 0, time.UTC),
 		},
 	}
-	repo := test.NewMockRepository(allRefs, commits, nilFetchImpl)
-	baseIter := test.NewMockIter(allRefs)
+	refs := test.Tags(tags).Refs()
+	// Stop at (reverse cronological) merged_pr_6.
+	stopAt := tags[5].GetHash()
+	// Included in iteration: merged_pr_7 only.
+	includedPrs := [1]*plumbing.Reference{refs[6]}
+
+	repo := test.NewMockRepository(tags, test.NilFetchImpl)
+	baseIter := test.NewMockIter(refs)
 	filteredIter, err := agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
 	iter := agit.NewStopReferenceIter(filteredIter, stopAtHash(stopAt))
@@ -301,7 +277,7 @@ func TestMergedPRIter_StopReferenceIter_Compose(t *testing.T) {
 	}
 	assert.True(t, i == len(includedPrs))
 
-	baseIter = test.NewMockIter(allRefs)
+	baseIter = test.NewMockIter(refs)
 	filteredIter, err = agit.NewMergedPRIter(&baseIter, repo)
 	assert.True(t, err == nil)
 	iter = agit.NewStopReferenceIter(filteredIter, stopAtHash(stopAt))
