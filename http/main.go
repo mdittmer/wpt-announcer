@@ -7,6 +7,7 @@ import (
 
 	"github.com/mdittmer/wpt-announcer/announcer"
 	"github.com/mdittmer/wpt-announcer/api"
+	"github.com/mdittmer/wpt-announcer/epoch"
 
 	agit "github.com/mdittmer/wpt-announcer/git"
 	log "github.com/sirupsen/logrus"
@@ -14,7 +15,25 @@ import (
 
 var a announcer.Announcer
 
+var epochs = []epoch.Epoch{
+	epoch.Weekly{},
+	epoch.Daily{},
+	epoch.EightHourly{},
+	epoch.FourHourly{},
+	epoch.TwoHourly{},
+	epoch.Hourly{},
+}
+
+var apiEpochs = make([]api.Epoch, 0)
+
+var latestGetRevisions = make(map[epoch.Epoch]int)
+
 func init() {
+	for _, e := range epochs {
+		apiEpochs = append(apiEpochs, api.FromEpoch(e))
+		latestGetRevisions[e] = 1
+	}
+
 	go func() {
 		log.Info("Initializing announcer")
 		var err error
@@ -85,4 +104,6 @@ func latestHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/api/revisions/epochs", epochsHandler)
 	http.HandleFunc("/api/revisions/latest", latestHandler)
+	log.Infof("Listening on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
