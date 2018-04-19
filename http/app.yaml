@@ -1,0 +1,13 @@
+runtime: go
+env: flex
+
+manual_scaling:
+  instances: 1
+resources:
+  cpu: 2
+  memory_gb: 12
+ 
+ handlers:
+ - url: /.*
+  script: _go_app
+  secure: always
