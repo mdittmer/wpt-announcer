@@ -8,18 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var monthly *epoch.Epoch
-var weekly *epoch.Epoch
-var daily *epoch.Epoch
-var hourly *epoch.Epoch
-var nilBasis epoch.Basis
+var monthly epoch.Epoch
+var weekly epoch.Epoch
+var daily epoch.Epoch
+var hourly epoch.Epoch
 
 func init() {
-	monthly = epoch.GetMonthly()
-	weekly = epoch.GetWeekly()
-	daily = epoch.GetDaily()
-	hourly = epoch.GetHourly()
-	nilBasis = epoch.Basis{}
+	monthly = epoch.Monthly{}
+	weekly = epoch.Weekly{}
+	daily = epoch.Daily{}
+	hourly = epoch.Hourly{}
 }
 
 //
@@ -29,29 +27,29 @@ func init() {
 func TestIsMonthly_Close(t *testing.T) {
 	justPrior := time.Date(2018, 3, 31, 23, 59, 59, 999999999, time.UTC)
 	justAfter := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
-	assert.True(t, monthly.IsEpochal(&justPrior, &justAfter, &nilBasis))
-	assert.True(t, monthly.IsEpochal(&justAfter, &justPrior, &nilBasis))
+	assert.True(t, monthly.IsEpochal(justPrior, justAfter))
+	assert.True(t, monthly.IsEpochal(justAfter, justPrior))
 }
 
 func TestIsMonthly_Far(t *testing.T) {
 	lastYear := time.Date(2017, 5, 1, 0, 0, 0, 0, time.UTC)
 	thisYear := time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
-	assert.True(t, monthly.IsEpochal(&lastYear, &thisYear, &nilBasis))
-	assert.True(t, monthly.IsEpochal(&thisYear, &lastYear, &nilBasis))
+	assert.True(t, monthly.IsEpochal(lastYear, thisYear))
+	assert.True(t, monthly.IsEpochal(thisYear, lastYear))
 }
 
 func TestIsNotMonthly_Close(t *testing.T) {
 	lastInstant := time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
 	nextInstant := time.Date(2018, 5, 1, 0, 0, 0, 1, time.UTC)
-	assert.False(t, monthly.IsEpochal(&lastInstant, &nextInstant, &nilBasis))
-	assert.False(t, monthly.IsEpochal(&nextInstant, &lastInstant, &nilBasis))
+	assert.False(t, monthly.IsEpochal(lastInstant, nextInstant))
+	assert.False(t, monthly.IsEpochal(nextInstant, lastInstant))
 }
 
 func TestIsNotMonthly_Far(t *testing.T) {
 	monthStart := time.Date(2018, 3, 1, 0, 0, 0, 0, time.UTC)
 	monthEnd := time.Date(2018, 3, 31, 23, 59, 59, 999999999, time.UTC)
-	assert.False(t, monthly.IsEpochal(&monthStart, &monthEnd, &nilBasis))
-	assert.False(t, monthly.IsEpochal(&monthEnd, &monthStart, &nilBasis))
+	assert.False(t, monthly.IsEpochal(monthStart, monthEnd))
+	assert.False(t, monthly.IsEpochal(monthEnd, monthStart))
 }
 
 //
@@ -61,29 +59,29 @@ func TestIsNotMonthly_Far(t *testing.T) {
 func TestIsWeekly_Close(t *testing.T) {
 	justPrior := time.Date(2018, 3, 31, 23, 59, 59, 999999999, time.UTC)
 	justAfter := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
-	assert.True(t, weekly.IsEpochal(&justPrior, &justAfter, &nilBasis))
-	assert.True(t, weekly.IsEpochal(&justAfter, &justPrior, &nilBasis))
+	assert.True(t, weekly.IsEpochal(justPrior, justAfter))
+	assert.True(t, weekly.IsEpochal(justAfter, justPrior))
 }
 
 func TestIsWeekly_Far(t *testing.T) {
 	lastYear := time.Date(2017, 5, 1, 0, 0, 0, 0, time.UTC)
 	thisYear := time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
-	assert.True(t, weekly.IsEpochal(&lastYear, &thisYear, &nilBasis))
-	assert.True(t, weekly.IsEpochal(&thisYear, &lastYear, &nilBasis))
+	assert.True(t, weekly.IsEpochal(lastYear, thisYear))
+	assert.True(t, weekly.IsEpochal(thisYear, lastYear))
 }
 
 func TestIsNotWeekly_Close(t *testing.T) {
 	lastInstant := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
 	nextInstant := time.Date(2018, 4, 1, 0, 0, 0, 1, time.UTC)
-	assert.False(t, weekly.IsEpochal(&lastInstant, &nextInstant, &nilBasis))
-	assert.False(t, weekly.IsEpochal(&nextInstant, &lastInstant, &nilBasis))
+	assert.False(t, weekly.IsEpochal(lastInstant, nextInstant))
+	assert.False(t, weekly.IsEpochal(nextInstant, lastInstant))
 }
 
 func TestIsNotWeekly_Far(t *testing.T) {
 	weekStart := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
 	weekEnd := time.Date(2018, 4, 7, 23, 59, 59, 999999999, time.UTC)
-	assert.False(t, weekly.IsEpochal(&weekStart, &weekEnd, &nilBasis))
-	assert.False(t, weekly.IsEpochal(&weekEnd, &weekStart, &nilBasis))
+	assert.False(t, weekly.IsEpochal(weekStart, weekEnd))
+	assert.False(t, weekly.IsEpochal(weekEnd, weekStart))
 }
 
 //
@@ -93,29 +91,29 @@ func TestIsNotWeekly_Far(t *testing.T) {
 func TestIsDaily_Close(t *testing.T) {
 	justPrior := time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC)
 	justAfter := time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC)
-	assert.True(t, daily.IsEpochal(&justPrior, &justAfter, &nilBasis))
-	assert.True(t, daily.IsEpochal(&justAfter, &justPrior, &nilBasis))
+	assert.True(t, daily.IsEpochal(justPrior, justAfter))
+	assert.True(t, daily.IsEpochal(justAfter, justPrior))
 }
 
 func TestIsDaily_Far(t *testing.T) {
 	lastYear := time.Date(2017, 5, 1, 0, 0, 0, 0, time.UTC)
 	thisYear := time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
-	assert.True(t, daily.IsEpochal(&lastYear, &thisYear, &nilBasis))
-	assert.True(t, daily.IsEpochal(&thisYear, &lastYear, &nilBasis))
+	assert.True(t, daily.IsEpochal(lastYear, thisYear))
+	assert.True(t, daily.IsEpochal(thisYear, lastYear))
 }
 
 func TestIsNotDaily_Close(t *testing.T) {
 	lastInstant := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
 	nextInstant := time.Date(2018, 4, 1, 0, 0, 0, 1, time.UTC)
-	assert.False(t, daily.IsEpochal(&lastInstant, &nextInstant, &nilBasis))
-	assert.False(t, daily.IsEpochal(&nextInstant, &lastInstant, &nilBasis))
+	assert.False(t, daily.IsEpochal(lastInstant, nextInstant))
+	assert.False(t, daily.IsEpochal(nextInstant, lastInstant))
 }
 
 func TestIsNotDaily_Far(t *testing.T) {
 	dayStart := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
 	dayEnd := time.Date(2018, 4, 1, 23, 59, 59, 999999999, time.UTC)
-	assert.False(t, daily.IsEpochal(&dayStart, &dayEnd, &nilBasis))
-	assert.False(t, daily.IsEpochal(&dayEnd, &dayStart, &nilBasis))
+	assert.False(t, daily.IsEpochal(dayStart, dayEnd))
+	assert.False(t, daily.IsEpochal(dayEnd, dayStart))
 }
 
 //
@@ -125,40 +123,27 @@ func TestIsNotDaily_Far(t *testing.T) {
 func TestIsHourly_Close(t *testing.T) {
 	justPrior := time.Date(2018, 4, 1, 0, 59, 59, 999999999, time.UTC)
 	justAfter := time.Date(2018, 4, 2, 1, 0, 0, 0, time.UTC)
-	assert.True(t, hourly.IsEpochal(&justPrior, &justAfter, &nilBasis))
-	assert.True(t, hourly.IsEpochal(&justAfter, &justPrior, &nilBasis))
+	assert.True(t, hourly.IsEpochal(justPrior, justAfter))
+	assert.True(t, hourly.IsEpochal(justAfter, justPrior))
 }
 
 func TestIsHourly_Far(t *testing.T) {
 	lastYear := time.Date(2017, 5, 1, 0, 0, 0, 0, time.UTC)
 	thisYear := time.Date(2018, 5, 1, 0, 0, 0, 0, time.UTC)
-	assert.True(t, hourly.IsEpochal(&lastYear, &thisYear, &nilBasis))
-	assert.True(t, hourly.IsEpochal(&thisYear, &lastYear, &nilBasis))
+	assert.True(t, hourly.IsEpochal(lastYear, thisYear))
+	assert.True(t, hourly.IsEpochal(thisYear, lastYear))
 }
 
 func TestIsNotHourly_Close(t *testing.T) {
 	lastInstant := time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC)
 	nextInstant := time.Date(2018, 4, 1, 0, 0, 0, 1, time.UTC)
-	assert.False(t, hourly.IsEpochal(&lastInstant, &nextInstant, &nilBasis))
-	assert.False(t, hourly.IsEpochal(&nextInstant, &lastInstant, &nilBasis))
+	assert.False(t, hourly.IsEpochal(lastInstant, nextInstant))
+	assert.False(t, hourly.IsEpochal(nextInstant, lastInstant))
 }
 
 func TestIsNotHourly_Far(t *testing.T) {
 	hourStart := time.Date(2018, 4, 1, 1, 0, 0, 0, time.UTC)
 	hourEnd := time.Date(2018, 4, 1, 1, 59, 59, 999999999, time.UTC)
-	assert.False(t, hourly.IsEpochal(&hourStart, &hourEnd, &nilBasis))
-	assert.False(t, hourly.IsEpochal(&hourEnd, &hourStart, &nilBasis))
-}
-
-//
-// GetGregorianEpochs
-//
-
-func TestGregorian(t *testing.T) {
-	gregorian := epoch.GetGregorianEpochs()
-	assert.True(t, len(gregorian) == 4)
-	assert.True(t, gregorian[0] == monthly)
-	assert.True(t, gregorian[1] == weekly)
-	assert.True(t, gregorian[2] == daily)
-	assert.True(t, gregorian[3] == hourly)
+	assert.False(t, hourly.IsEpochal(hourStart, hourEnd))
+	assert.False(t, hourly.IsEpochal(hourEnd, hourStart))
 }

@@ -1,6 +1,8 @@
 package git
 
 import (
+	"time"
+
 	billy "gopkg.in/src-d/go-billy.v4"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -19,4 +21,22 @@ type Repository interface {
 // Git is a handful of git functions reified as an interface to facilitate testing.
 type Git interface {
 	Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (Repository, error)
+}
+
+type Revision interface {
+	GetHash() plumbing.Hash
+	GetCommitTime() time.Time
+}
+
+type RevisionData struct {
+	Hash       plumbing.Hash
+	CommitTime time.Time
+}
+
+func (d RevisionData) GetHash() plumbing.Hash {
+	return d.Hash
+}
+
+func (d RevisionData) GetCommitTime() time.Time {
+	return d.CommitTime
 }

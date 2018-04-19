@@ -4,91 +4,75 @@ import (
 	"time"
 )
 
-var monthly = &Epoch{
-	MinDuration: time.Hour * 24 * 28,
-	MaxDuration: time.Hour * 24 * 31,
-	IsEpochal:   monthlyIsEpochal,
-}
-var weekly = &Epoch{
-	MinDuration: time.Hour * 24 * 7,
-	MaxDuration: time.Hour * 24 * 7,
-	IsEpochal:   weeklyIsEpochal,
-}
-var daily = &Epoch{
-	MinDuration: time.Hour * 24,
-	MaxDuration: time.Hour * 24,
-	IsEpochal:   dailyIsEpochal,
-}
-var hourly = &Epoch{
-	MinDuration: time.Hour,
-	MaxDuration: time.Hour,
-	IsEpochal:   hourlyIsEpochal,
+type Monthly struct{}
+
+func (Monthly) GetData() Data {
+	return Data{
+		time.Hour * 24 * 28,
+		time.Hour * 24 * 31,
+	}
 }
 
-func monthlyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
+func (Monthly) IsEpochal(prev time.Time, next time.Time) bool {
 	if prev.Year() != next.Year() {
 		return true
 	}
 	return prev.Month() != next.Month()
 }
 
-func weeklyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
-	if prev.After(*next) {
-		return weeklyIsEpochal(next, prev, basis)
+type Weekly struct{}
+
+func (Weekly) GetData() Data {
+	return Data{
+		time.Hour * 24 * 7,
+		time.Hour * 24 * 7,
 	}
-	if next.Sub(*prev).Hours() >= 24*7 {
+}
+
+func (e Weekly) IsEpochal(prev time.Time, next time.Time) bool {
+	if prev.After(next) {
+		return e.IsEpochal(next, prev)
+	}
+	if next.Sub(prev).Hours() >= 24*7 {
 		return true
 	}
 	return prev.Weekday() > next.Weekday()
 }
 
-func dailyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
-	if prev.After(*next) {
-		return dailyIsEpochal(next, prev, basis)
+type Daily struct{}
+
+func (Daily) GetData() Data {
+	return Data{
+		time.Hour * 24,
+		time.Hour * 24,
 	}
-	if next.Sub(*prev).Hours() >= 24 {
+}
+
+func (e Daily) IsEpochal(prev time.Time, next time.Time) bool {
+	if prev.After(next) {
+		return e.IsEpochal(next, prev)
+	}
+	if next.Sub(prev).Hours() >= 24 {
 		return true
 	}
 	return prev.Day() != next.Day()
 }
 
-func hourlyIsEpochal(prev *time.Time, next *time.Time, basis *Basis) bool {
-	if prev.After(*next) {
-		return hourlyIsEpochal(next, prev, basis)
+type Hourly struct{}
+
+func (Hourly) GetData() Data {
+	return Data{
+		time.Hour,
+		time.Hour,
 	}
-	if next.Sub(*prev).Hours() >= 1 {
+}
+
+func (e Hourly) IsEpochal(prev time.Time, next time.Time) bool {
+	if prev.After(next) {
+		return e.IsEpochal(next, prev)
+	}
+	if next.Sub(prev).Hours() >= 1 {
 		return true
 	}
 	return prev.Hour() != next.Hour()
-}
-
-// GetMonthly generates an Epoch that changes at the beginning of every month according to time.Time.Month() enumeration.
-func GetMonthly() *Epoch {
-	return monthly
-}
-
-// GetWeekly generates an Epoch that changes at the beginning of every week according to time.Time.Weekday() enumeration.
-func GetWeekly() *Epoch {
-	return weekly
-}
-
-// GetDaily generates an Epoch that changes at the beginning of every day according to time.Time.Day() enumeration.
-func GetDaily() *Epoch {
-	return daily
-}
-
-// GetHourly generates an Epoch that changes at the beginning of every hour of the day according to time.Time.Hour() enumeration.
-func GetHourly() *Epoch {
-	return hourly
-}
-
-var gregorianEpochs []*Epoch
-
-func init() {
-	gregorianEpochs = []*Epoch{monthly, weekly, daily, hourly}
-}
-
-// GetGregorianEpochs generates a []Epoch in descending order of epoch length, where each Epoch corresponds to a Gregorian calendar measure of time.
-func GetGregorianEpochs() []*Epoch {
-	return gregorianEpochs
 }

@@ -2,18 +2,35 @@ package epoch
 
 import "time"
 
-// Basis is used by EpochalPredicate functions that require a basis for calculating the beginning of each epoch.
-type Basis struct {
-	Start *time.Time
-	Now   *time.Time
+// EpochalPredicate is a predicate that determines whether a new epoch begins between prev and next.
+type EpochalPredicate func(prev time.Time, next time.Time) bool
+
+type Data struct {
+	MinDuration time.Duration
+	MaxDuration time.Duration
 }
 
 // Epoch encapsulates a pattern in time during which new epochs begin at regular intervals.
-type Epoch struct {
-	MinDuration time.Duration
-	MaxDuration time.Duration
-	IsEpochal   EpochalPredicate
+type Epoch interface {
+	GetData() Data
+	IsEpochal(prev time.Time, next time.Time) bool
 }
 
-// EpochalPredicate is a predicate that determines whether a new epoch begins between prev and next.
-type EpochalPredicate func(prev *time.Time, next *time.Time, basis *Basis) bool
+// ByMaxDuration is a []Epoch sortable by GetMaxDuration() values.
+type ByMaxDuration []Epoch
+
+func (e ByMaxDuration) Len() int {
+	return len(e)
+}
+func (e ByMaxDuration) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+func (e ByMaxDuration) Less(i, j int) bool {
+	if e[i] == nil {
+		return false
+	}
+	if e[j] == nil {
+		return true
+	}
+	return e[i].GetData().MaxDuration < e[j].GetData().MaxDuration
+}
