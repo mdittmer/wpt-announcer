@@ -14,9 +14,9 @@ var epochs = []epoch.Epoch{
 	epoch.Hourly{},
 }
 
-var apiEpochs []api.Epoch
+var apiEpochs = make([]api.Epoch, 0)
 
-var latestGetRevisions map[epoch.Epoch]int
+var latestGetRevisions = make(map[epoch.Epoch]int)
 
 func init() {
 	for _, e := range epochs {
