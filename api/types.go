@@ -125,7 +125,7 @@ type EpochsRequest struct{}
 // 	title="List-of-epochs response",
 //	description="The JSON format for a response containing the epochs supported by the service."
 // )
-////go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api EpochsResponse
+//go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api EpochsResponse
 type EpochsResponse []Epoch
 
 // RevisionsRequest is models a request for the announced revisions.
