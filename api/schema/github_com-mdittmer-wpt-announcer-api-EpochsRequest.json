@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "List-of-epochs request",
+  "description": "The HTTP GET parameters for a list of the epochs supported by the service.",
+  "x-go-path": "github.com/mdittmer/wpt-announcer/api/EpochsRequest"
+}

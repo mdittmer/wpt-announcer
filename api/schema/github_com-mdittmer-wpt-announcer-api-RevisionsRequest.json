@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "epochs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "Epoch encapsulates a pattern in time during which new epochs begin at regular intervals."
+      }
+    },
+    "now": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "num_revisions": {
+      "type": "integer"
+    },
+    "start": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "x-go-path": "github.com/mdittmer/wpt-announcer/api/RevisionsRequest"
+}

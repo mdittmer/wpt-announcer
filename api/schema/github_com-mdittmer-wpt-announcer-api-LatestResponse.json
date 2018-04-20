@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Latest revisions response",
+  "description": "The JSON format for a response containing the latest announced revisions.",
+  "definitions": {
+    "github_com-mdittmer-wpt-announcer-api-Epoch": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "max_duration_sec": {
+          "type": "number"
+        },
+        "min_duration_sec": {
+          "type": "number"
+        }
+      },
+      "x-go-path": "github.com/mdittmer/wpt-announcer/api/Epoch"
+    }
+  },
+  "properties": {
+    "epochs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/github_com-mdittmer-wpt-announcer-api-Epoch"
+      }
+    },
+    "revisions": {
+      "type": "object",
+      "title": "Latest revisions response",
+      "description": "The JSON format for a response containing the latest announced revisions."
+    }
+  },
+  "x-go-path": "github.com/mdittmer/wpt-announcer/api/LatestResponse"
+}

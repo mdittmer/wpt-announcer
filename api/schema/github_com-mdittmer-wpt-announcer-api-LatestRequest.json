@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Latest revisions request",
+  "description": "The HTTP get parameters for a request for the latest announced revisions.",
+  "x-go-path": "github.com/mdittmer/wpt-announcer/api/LatestRequest"
+}
