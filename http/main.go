@@ -106,7 +106,12 @@ type apiData struct {
 func (a apiData) schemaHandler(t reflect.Type) func(w http.ResponseWriter, r *http.Request) {
 	pkg := strings.Replace(strings.Replace(t.PkgPath(), "/", "-", -1), ".", "_", -1)
 	name := t.Name()
-	path := fmt.Sprintf("%s/src/github.com/mdittmer/wpt-announcer/api/schema/%s-%s.json", os.Getenv("GOPATH"), pkg, name)
+	gopath := os.Getenv("GOPATH")
+	// Screw you and your underspecified environment, AppEngine Flex!
+	if gopath == "" {
+		gopath = "/workspace/_gopath"
+	}
+	path := fmt.Sprintf("%s/src/github.com/mdittmer/wpt-announcer/api/schema/%s-%s.json", gopath, pkg, name)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read %s: %v", path, err)
