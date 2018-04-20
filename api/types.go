@@ -47,8 +47,8 @@ func FromEpoch(e epoch.Epoch) Epoch {
 }
 
 type Revision struct {
-	Hash       string
-	CommitTime time.Time
+	Hash       string    `json:"hash"`
+	CommitTime time.Time `json:"commit_time"`
 }
 
 // LatestRequest is models a request for the latest announced revisions.
@@ -156,4 +156,50 @@ type RevisionsResponse struct {
 	Revisions map[string][]Revision `json:"revisions"`
 	Epochs    []Epoch               `json:"epochs"`
 	Error     string                `json:"error,omitempty"`
+}
+
+func RevisionsFromEpochs(revs map[epoch.Epoch][]agit.Revision, apiErr error) RevisionsResponse {
+	epochs := make([]epoch.Epoch, 0, len(revs))
+	for e := range revs {
+		epochs = append(epochs, e)
+	}
+	sort.Sort(epoch.ByMaxDuration(epochs))
+	es := make([]Epoch, 0, len(epochs))
+	for _, e := range epochs {
+		es = append(es, FromEpoch(e))
+	}
+
+	rs := make(map[string][]Revision)
+
+	for i := range es {
+		if len(revs[epochs[i]]) == 0 {
+			continue
+		}
+		revs := revs[epochs[i]]
+		apiRevs := make([]Revision, 0, len(revs))
+		for _, rev := range revs {
+			apiRevs = append(apiRevs, Revision{
+				Hash:       fmt.Sprintf("%020x", rev.GetHash()),
+				CommitTime: rev.GetCommitTime(),
+			})
+		}
+		rs[es[i].ID] = apiRevs
+	}
+
+	var response RevisionsResponse
+	if apiErr != nil {
+		response = RevisionsResponse{
+			rs,
+			es,
+			apiErr.Error(),
+		}
+	} else {
+		response = RevisionsResponse{
+			rs,
+			es,
+			"",
+		}
+	}
+
+	return response
 }
