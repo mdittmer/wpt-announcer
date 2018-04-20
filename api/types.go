@@ -155,4 +155,5 @@ type RevisionsRequest struct {
 type RevisionsResponse struct {
 	Revisions map[string][]Revision `json:"revisions"`
 	Epochs    []Epoch               `json:"epochs"`
+	Error     string                `json:"error,omitempty"`
 }
