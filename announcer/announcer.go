@@ -16,7 +16,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
 
-const mergedPrTagPrefix = "refs/tags/merged_pr_"
+const mergedPrTagPrefix = "refs/tags/merge_pr_"
 
 var errNotAllEpochsConsumed = errors.New("Not all epochs consumed")
 var errNilRepo = errors.New("Repository may not be nil")
@@ -93,7 +93,7 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 	}
 
 	// (1) Start with all tags                                         [tagsIter]
-	// (2) Filter tags to included nothing but "merged_pr_*" tags, and [prIter]
+	// (2) Filter tags to included nothing but "merge_pr_*" tags, and  [prIter]
 	//     order by descending commit time                             [prIter]
 	// (3) Skip tags after basis.Now, and                              [return]
 	// (4) Stop iteration when commit time is before basis.Start       [return]
@@ -270,7 +270,8 @@ func (a *gitRemoteAnnouncer) Update() (err error) {
 	if err = a.repo.Fetch(&git.FetchOptions{
 		RemoteName: a.cfg.RemoteName,
 		RefSpecs:   []config.RefSpec{refSpec},
-		Depth:      100,
+		Depth:      a.cfg.Depth,
+		Tags:       a.cfg.Tags,
 	}); err != nil {
 		log.Error(err)
 		return err

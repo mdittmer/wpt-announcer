@@ -31,7 +31,7 @@ func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_4",
+			TagName:    "merge_pr_4",
 			Hash:       "04",
 			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
@@ -41,7 +41,7 @@ func TestTimeOrderedReferenceIter_Simple(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_6",
+			TagName:    "merge_pr_6",
 			Hash:       "06",
 			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		},
@@ -136,7 +136,7 @@ func TestMergedPRIter_Simple(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_4",
+			TagName:    "merge_pr_4",
 			Hash:       "04",
 			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		},
@@ -146,13 +146,13 @@ func TestMergedPRIter_Simple(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_6",
+			TagName:    "merge_pr_6",
 			Hash:       "06",
 			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
 		},
 	}
 	refs := test.Tags(tags).Refs()
-	// merged_pr_* from refs in reverse cronological order.
+	// merge_pr_* from refs in reverse cronological order.
 	prs := [2]*plumbing.Reference{refs[5], refs[3]}
 	repo := test.NewMockRepository(tags, test.NilFetchImpl)
 	baseIter := test.NewMockIter(refs)
@@ -239,7 +239,7 @@ func TestMergedPRIter_StopReferenceIter_Compose(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_4",
+			TagName:    "merge_pr_4",
 			Hash:       "04",
 			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		},
@@ -249,20 +249,20 @@ func TestMergedPRIter_StopReferenceIter_Compose(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_6",
+			TagName:    "merge_pr_6",
 			Hash:       "06",
 			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_7",
+			TagName:    "merge_pr_7",
 			Hash:       "07",
 			CommitTime: time.Date(2018, 4, 7, 0, 0, 0, 0, time.UTC),
 		},
 	}
 	refs := test.Tags(tags).Refs()
-	// Stop at (reverse cronological) merged_pr_6.
+	// Stop at (reverse cronological) merge_pr_6.
 	stopAt := tags[5].GetHash()
-	// Included in iteration: merged_pr_7 only.
+	// Included in iteration: merge_pr_7 only.
 	includedPrs := [1]*plumbing.Reference{refs[6]}
 
 	repo := test.NewMockRepository(tags, test.NilFetchImpl)

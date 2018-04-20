@@ -76,12 +76,12 @@ func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_6",
+			TagName:    "merge_pr_6",
 			Hash:       "06",
 			CommitTime: time.Date(2018, 4, 6, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_5",
+			TagName:    "merge_pr_5",
 			Hash:       "05",
 			CommitTime: time.Date(2018, 4, 5, 0, 0, 0, 0, time.UTC),
 		},
@@ -91,12 +91,12 @@ func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 			CommitTime: time.Date(2018, 4, 3, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_4",
+			TagName:    "merge_pr_4",
 			Hash:       "04",
 			CommitTime: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 		},
 		test.Tag{
-			TagName:    "merged_pr_2",
+			TagName:    "merge_pr_2",
 			Hash:       "02",
 			CommitTime: time.Date(2018, 4, 2, 0, 0, 0, 0, time.UTC),
 		},
@@ -105,7 +105,7 @@ func TestBoundedMergedPRIterFactory_GetIter(t *testing.T) {
 		Start: time.Date(2018, 4, 4, 0, 0, 0, 0, time.UTC),
 	})
 	assert.True(t, err == nil)
-	refNames := []string{"refs/tags/merged_pr_5", "refs/tags/merged_pr_4"}
+	refNames := []string{"refs/tags/merge_pr_5", "refs/tags/merge_pr_4"}
 	i := 0
 	var ref *plumbing.Reference
 	for ref, err = iter.Next(); ref != nil && err == nil; ref, err = iter.Next() {

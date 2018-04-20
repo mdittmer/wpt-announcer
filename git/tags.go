@@ -138,7 +138,7 @@ func NewMergedPRIter(iter storer.ReferenceIter, repo Repository) (storer.Referen
 			if ref == nil {
 				return false
 			}
-			return strings.HasPrefix(string(ref.Name()), "refs/tags/merged_pr_")
+			return strings.HasPrefix(string(ref.Name()), "refs/tags/merge_pr_")
 		},
 		iter: iter,
 	}, repo)
