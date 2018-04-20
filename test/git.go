@@ -7,8 +7,9 @@ import (
 	"io"
 	"time"
 
+	"log"
+
 	agit "github.com/mdittmer/wpt-announcer/git"
-	log "github.com/sirupsen/logrus"
 	billy "gopkg.in/src-d/go-billy.v4"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -80,7 +81,7 @@ func NewHash(hashStr string) plumbing.Hash {
 			fixedHash[i] = hashSlice[i-padStop]
 		}
 	}
-	log.Infof("%x", fixedHash)
+	log.Printf("INFO: %x", fixedHash)
 	return plumbing.Hash(fixedHash)
 }
 

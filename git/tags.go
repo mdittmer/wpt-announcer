@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"log"
+
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
@@ -80,7 +81,7 @@ func NewTimeOrderedReferenceIter(iter storer.ReferenceIter, repo Repository) (st
 	for ref, err = iter.Next(); ref != nil && err == nil; ref, err = iter.Next() {
 		commit, err := tori.repo.CommitObject(ref.Hash())
 		if err != nil {
-			log.Warnf("Failed to lookup commit for reference %v", ref)
+			log.Printf("WARN: Failed to lookup commit for reference %v", ref)
 			continue
 		}
 		rcs = append(rcs, refCommit{
@@ -143,7 +144,7 @@ func NewMergedPRIter(iter storer.ReferenceIter, repo Repository) (storer.Referen
 		iter: iter,
 	}, repo)
 	if err != nil {
-		log.Errorf("Failed to construct new merged PR iter: %v", err)
+		log.Printf("ERRO: Failed to construct new merged PR iter: %v", err)
 		return nil, err
 	}
 	return iter, err

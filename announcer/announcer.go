@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"log"
+
 	"github.com/mdittmer/wpt-announcer/epoch"
 	agit "github.com/mdittmer/wpt-announcer/git"
-	log "github.com/sirupsen/logrus"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -100,34 +101,34 @@ func (f boundedMergedPRIterFactory) GetIter(repo agit.Repository, limits Limits)
 
 	tagsIter, err := repo.Tags()
 	if err != nil {
-		log.Error("Failed to create git remote reference iter: %v", err)
+		log.Print("ERRO: ERRO: Failed to create git remote reference iter: %v", err)
 		return nil, err
 	}
 
 	prIter, err := agit.NewMergedPRIter(tagsIter, repo)
 	if err != nil {
-		log.Errorf("Failed to create git remote reference iter: %v", err)
+		log.Printf("ERRO: Failed to create git remote reference iter: %v", err)
 		return nil, err
 	}
 
 	return agit.NewStopReferenceIter(agit.NewStartReferenceIter(prIter, func(ref *plumbing.Reference) bool {
 		if ref == nil {
-			log.Warnf("Announcer iter.StartAt(): Reference is nil; skipping...")
+			log.Printf("WARN: Announcer iter.StartAt(): Reference is nil; skipping...")
 			return false
 		}
 		commit, err := repo.CommitObject(ref.Hash())
 		if err != nil {
-			log.Warnf("Announcer iter.StartAt(): Error getting commit; skipping...")
+			log.Printf("WARN: Announcer iter.StartAt(): Error getting commit; skipping...")
 			return false
 		}
 		return commit.Committer.When.Before(limits.Now)
 	}), func(ref *plumbing.Reference) bool {
 		if ref == nil {
-			log.Warnf("Announcer iter.StopAt(): Reference is nil; not stopping...")
+			log.Printf("WARN: Announcer iter.StopAt(): Reference is nil; not stopping...")
 		}
 		commit, err := repo.CommitObject(ref.Hash())
 		if err != nil {
-			log.Warnf("Announcer iter.StopAt(): Error getting commit; not stopping...")
+			log.Printf("WARN: Announcer iter.StopAt(): Error getting commit; not stopping...")
 			return false
 		}
 		return commit.Committer.When.Before(limits.Start)
@@ -178,7 +179,7 @@ func NewGitRemoteAnnouncer(cfg GitRemoteAnnouncerConfig) (Announcer, error) {
 		err = errNilRepo
 	}
 	if err != nil {
-		log.Errorf("Failed to construct git remote announcer: %v", err)
+		log.Printf("ERRO: Failed to construct git remote announcer: %v", err)
 		return nil, err
 	}
 
@@ -196,7 +197,7 @@ func (a *gitRemoteAnnouncer) GetRevisions(epochs map[epoch.Epoch]int, limits Lim
 	// Initialize iterator according to config.
 	iter, err := a.cfg.EpochReferenceIterFactory.GetIter(a.repo, limits)
 	if err != nil {
-		log.Errorf("Failed to initialize reference iterator: %v", err)
+		log.Printf("ERRO: Failed to initialize reference iterator: %v", err)
 		return nil, err
 	}
 
@@ -218,7 +219,7 @@ func (a *gitRemoteAnnouncer) GetRevisions(epochs map[epoch.Epoch]int, limits Lim
 	for ref, err := iter.Next(); ref != nil && err == nil; ref, err = iter.Next() {
 		c, err := a.repo.CommitObject(ref.Hash())
 		if err != nil {
-			log.Warnf("Failed to locate commit for PR tag: %s; skipping...", ref.Name)
+			log.Printf("WARN: Failed to locate commit for PR tag: %s; skipping...", ref.Name)
 			continue
 		}
 		nextTime := c.Committer.When
@@ -261,7 +262,7 @@ func (a *gitRemoteAnnouncer) GetRevisions(epochs map[epoch.Epoch]int, limits Lim
 func (a *gitRemoteAnnouncer) Update() (err error) {
 	if a.repo == nil {
 		err = GetErrNilRepo()
-		log.Error(err)
+		log.Printf("ERRO: %v", err)
 		return err
 	}
 
@@ -273,8 +274,13 @@ func (a *gitRemoteAnnouncer) Update() (err error) {
 		Depth:      a.cfg.Depth,
 		Tags:       a.cfg.Tags,
 	}); err != nil {
-		log.Error(err)
-		return err
+		if err == git.NoErrAlreadyUpToDate {
+			log.Printf("INFO: Already up-to-date")
+			return nil
+		} else {
+			log.Printf("ERRO: %v", err)
+			return err
+		}
 	}
 
 	return nil
@@ -291,7 +297,7 @@ func (a *gitRemoteAnnouncer) Reset() error {
 		Tags:          cfg.Tags,
 	})
 	if err != nil {
-		log.Errorf("Error creating git clone: %v", err)
+		log.Printf("ERRO: Error creating git clone: %v", err)
 		return err
 	}
 	a.repo = repo

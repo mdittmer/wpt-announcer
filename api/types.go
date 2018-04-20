@@ -2,8 +2,10 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/mdittmer/wpt-announcer/epoch"
 	agit "github.com/mdittmer/wpt-announcer/git"
@@ -44,9 +46,32 @@ func FromEpoch(e epoch.Epoch) Epoch {
 	}
 }
 
+type Revision struct {
+	Hash       string
+	CommitTime time.Time
+}
+
+// LatestRequest is models a request for the latest announced revisions.
+//
+// @jsonschema(
+// 	title="Latest revisions request",
+//	description="The HTTP get parameters for a request for the latest announced revisions."
+// )
+//
+//go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api LatestRequest
+type LatestRequest struct{}
+
+// LatestResponse is models a response for the latest announced revisions.
+//
+// @jsonschema(
+// 	title="Latest revisions response",
+//	description="The JSON format for a response containing the latest announced revisions."
+// )
+//
+//go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api LatestResponse
 type LatestResponse struct {
-	Revisions map[string]agit.Revision
-	Epochs    []Epoch
+	Revisions map[string]Revision `json:"revisions"'`
+	Epochs    []Epoch             `json:"epochs"`
 }
 
 func LatestFromEpochs(revs map[epoch.Epoch][]agit.Revision) (LatestResponse, error) {
@@ -60,13 +85,17 @@ func LatestFromEpochs(revs map[epoch.Epoch][]agit.Revision) (LatestResponse, err
 		es = append(es, FromEpoch(e))
 	}
 
-	rs := make(map[string]agit.Revision)
+	rs := make(map[string]Revision)
 
 	for i := range es {
 		if len(revs[epochs[i]]) == 0 {
 			continue
 		}
-		rs[es[i].ID] = revs[epochs[i]][0]
+		rev := revs[epochs[i]][0]
+		rs[es[i].ID] = Revision{
+			Hash:       fmt.Sprintf("%020x", rev.GetHash()),
+			CommitTime: rev.GetCommitTime(),
+		}
 	}
 
 	latest := LatestResponse{
@@ -81,4 +110,49 @@ func LatestFromEpochs(revs map[epoch.Epoch][]agit.Revision) (LatestResponse, err
 	return latest, nil
 }
 
+// EpochsRequest is models a request for the epochs supported by the service.
+//
+// @jsonschema(
+// 	title="List-of-epochs request",
+//	description="The HTTP GET parameters for a list of the epochs supported by the service."
+// )
+//go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api EpochsRequest
+type EpochsRequest struct{}
+
+// EpochsResponse is models a response for the epochs supported by the service.
+//
+// @jsonschema(
+// 	title="List-of-epochs response",
+//	description="The JSON format for a response containing the epochs supported by the service."
+// )
+////go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api EpochsResponse
 type EpochsResponse []Epoch
+
+// RevisionsRequest is models a request for the announced revisions.
+//
+// @jsonschema(
+// 	title="Revisions request",
+//	description="The HTTP get parameters for a request for specific announced revisions. Use `epochs` to filter by epochs (default all). Use `num_revisions` to specify number of revisions per epoch (default 1). Use `now` to specify an upper bound on commit time. Use `start` to specify a lower bound on commit time."
+// )
+//
+//go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api RevisionsRequest
+
+type RevisionsRequest struct {
+	Epochs       []epoch.Epoch `json:"epochs,omitempty"`
+	NumRevisions int           `json:"num_revisions,omitempty"`
+	Now          time.Time     `json:"now,omitempty"`
+	Start        time.Time     `json:"start,omitempty"`
+}
+
+// RevisionsResponse is models a response for the announced revisions.
+//
+// @jsonschema(
+// 	title="Revisions response",
+//	description="The JSON format for a response containing announced revisions."
+// )
+//
+//go:generate jsonschemagen github.com/mdittmer/wpt-announcer/api RevisionsResponse
+type RevisionsResponse struct {
+	Revisions map[string][]Revision `json:"revisions"`
+	Epochs    []Epoch               `json:"epochs"`
+}
