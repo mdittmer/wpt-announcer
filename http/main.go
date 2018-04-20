@@ -114,7 +114,8 @@ func (a apiData) schemaHandler(t reflect.Type) func(w http.ResponseWriter, r *ht
 	path := fmt.Sprintf("%s/src/github.com/mdittmer/wpt-announcer/api/schema/%s-%s.json", gopath, pkg, name)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalf("Failed to read %s: %v", path, err)
+		bytes = []byte{}
+		log.Printf("ERRO: Failed to read %s: %v", path, err)
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		prepareJSONResponse(w, r, url.Values{})
