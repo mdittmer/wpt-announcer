@@ -106,7 +106,7 @@ type apiData struct {
 func (a apiData) schemaHandler(t reflect.Type) func(w http.ResponseWriter, r *http.Request) {
 	pkg := strings.Replace(strings.Replace(t.PkgPath(), "/", "-", -1), ".", "_", -1)
 	name := t.Name()
-	path := fmt.Sprintf("../api/schema/%s-%s.json", pkg, name)
+	path := fmt.Sprintf("./api/schema/%s-%s.json", pkg, name)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read %s: %v", path, err)
