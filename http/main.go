@@ -367,7 +367,7 @@ func init() {
 		a, err = announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 			URL:                       "https://github.com/w3c/web-platform-tests.git",
 			RemoteName:                "origin",
-			ReferenceName:             "refs/heads/master",
+			BranchName:                "master",
 			EpochReferenceIterFactory: announcer.NewBoundedMergedPRIterFactory(),
 			Git: agit.GoGit{},
 		})
