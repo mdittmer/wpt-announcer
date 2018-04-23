@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"sort"
 	"time"
@@ -179,7 +178,7 @@ func RevisionsFromEpochs(revs map[epoch.Epoch][]agit.Revision, apiErr error) Rev
 		apiRevs := make([]Revision, 0, len(revs))
 		for _, rev := range revs {
 			apiRevs = append(apiRevs, Revision{
-				Hash:       fmt.Sprintf("%020x", rev.GetHash()),
+				Hash:       rev.GetHash().String(),
 				CommitTime: rev.GetCommitTime(),
 			})
 		}
