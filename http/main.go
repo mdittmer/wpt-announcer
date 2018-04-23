@@ -314,7 +314,7 @@ func revisionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	start := now.Add(-2 * epochs[0].GetData().MaxDuration)
+	start := now.Add(time.Duration(-1-numRevisions) * epochs[0].GetData().MaxDuration)
 	if tStrs, ok := q["start"]; ok {
 		if len(tStrs) > 1 {
 			w.WriteHeader(500)
