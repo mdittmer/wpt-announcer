@@ -93,7 +93,7 @@ func LatestFromEpochs(revs map[epoch.Epoch][]agit.Revision) (LatestResponse, err
 		}
 		rev := revs[epochs[i]][0]
 		rs[es[i].ID] = Revision{
-			Hash:       fmt.Sprintf("%020x", rev.GetHash()),
+			Hash:       rev.GetHash().String(),
 			CommitTime: rev.GetCommitTime(),
 		}
 	}
