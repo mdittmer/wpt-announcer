@@ -3,7 +3,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"sort"
 	"time"
@@ -94,7 +93,7 @@ func LatestFromEpochs(revs map[epoch.Epoch][]agit.Revision) (LatestResponse, err
 		}
 		rev := revs[epochs[i]][0]
 		rs[es[i].ID] = Revision{
-			Hash:       fmt.Sprintf("%020x", rev.GetHash()),
+			Hash:       rev.GetHash().String(),
 			CommitTime: rev.GetCommitTime(),
 		}
 	}
@@ -180,7 +179,7 @@ func RevisionsFromEpochs(revs map[epoch.Epoch][]agit.Revision, apiErr error) Rev
 		apiRevs := make([]Revision, 0, len(revs))
 		for _, rev := range revs {
 			apiRevs = append(apiRevs, Revision{
-				Hash:       fmt.Sprintf("%020x", rev.GetHash()),
+				Hash:       rev.GetHash().String(),
 				CommitTime: rev.GetCommitTime(),
 			})
 		}

@@ -153,11 +153,11 @@ type Announcer interface {
 
 // GitRemoteAnnouncerConfig configures the git operations performed by a GitRemoteAnnouncer.
 type GitRemoteAnnouncerConfig struct {
-	URL           string
-	RemoteName    string
-	ReferenceName plumbing.ReferenceName
-	Depth         int
-	Tags          git.TagMode
+	URL        string
+	RemoteName string
+	BranchName string
+	Depth      int
+	Tags       git.TagMode
 	EpochReferenceIterFactory
 	agit.Git
 }
@@ -266,7 +266,7 @@ func (a *gitRemoteAnnouncer) Update() (err error) {
 		return err
 	}
 
-	name := a.cfg.ReferenceName
+	name := a.cfg.BranchName
 	refSpec := config.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/remotes/origin/%s", name, name))
 	if err = a.repo.Fetch(&git.FetchOptions{
 		RemoteName: a.cfg.RemoteName,
@@ -289,10 +289,11 @@ func (a *gitRemoteAnnouncer) Update() (err error) {
 // Reset drops reference to the current repository (if any) and performs creates a new clone according to a.cfg.
 func (a *gitRemoteAnnouncer) Reset() error {
 	cfg := a.cfg
+	refName := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", cfg.BranchName))
 	repo, err := cfg.Git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:           cfg.URL,
 		RemoteName:    cfg.RemoteName,
-		ReferenceName: cfg.ReferenceName,
+		ReferenceName: refName,
 		Depth:         cfg.Depth,
 		Tags:          cfg.Tags,
 	})

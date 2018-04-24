@@ -270,9 +270,8 @@ func revisionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	getRevisions := latestGetRevisions
+	getRevisions := make(map[epoch.Epoch]int)
 	if eStrs, ok := q["epochs"]; ok {
-		getRevisions = make(map[epoch.Epoch]int)
 		for _, eStr := range eStrs {
 			if e, ok := epochsMap[eStr]; ok {
 				getRevisions[e] = numRevisions
@@ -281,6 +280,10 @@ func revisionsHandler(w http.ResponseWriter, r *http.Request) {
 				w.Write(strToErrorJSON(fmt.Sprintf("Unknown epoch: %s", eStr)))
 				return
 			}
+		}
+	} else {
+		for e := range latestGetRevisions {
+			getRevisions[e] = numRevisions
 		}
 	}
 
@@ -311,7 +314,7 @@ func revisionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	start := now.Add(-2 * epochs[0].GetData().MaxDuration)
+	start := now.Add(time.Duration(-1-numRevisions) * epochs[0].GetData().MaxDuration)
 	if tStrs, ok := q["start"]; ok {
 		if len(tStrs) > 1 {
 			w.WriteHeader(500)
@@ -367,7 +370,7 @@ func init() {
 		a, err = announcer.NewGitRemoteAnnouncer(announcer.GitRemoteAnnouncerConfig{
 			URL:                       "https://github.com/w3c/web-platform-tests.git",
 			RemoteName:                "origin",
-			ReferenceName:             "refs/heads/master",
+			BranchName:                "master",
 			EpochReferenceIterFactory: announcer.NewBoundedMergedPRIterFactory(),
 			Git: agit.GoGit{},
 		})
